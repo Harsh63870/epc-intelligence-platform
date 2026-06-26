@@ -1,0 +1,65 @@
+﻿# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+*.tsbuildinfo
+
+# Python
+backend/.venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env.local
+frontend/.env*.local
+!frontend/.env.local.example
+
+# Local databases & runtime data
+backend/epc_dev.db
+backend/*.db
+backend/chroma_data/
+data/uploads/
+
+# IDE & editor tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+.cursor/
+AGENTS.md
+**/AGENTS.md
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Deployment
+.vercel/

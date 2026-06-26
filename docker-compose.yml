@@ -1,0 +1,21 @@
+﻿services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: epc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: epc
+      POSTGRES_PASSWORD: epc_secret
+      POSTGRES_DB: epc_intelligence
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U epc -d epc_intelligence"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
