@@ -9,10 +9,12 @@ import {
   CalendarRange,
   Truck,
   Wrench,
+  FileText,
 } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/documents", label: "Documents", icon: FileText },
   { href: "/rfi", label: "RFI Copilot", icon: MessageSquare },
   { href: "/compliance", label: "Spec Compliance", icon: ClipboardCheck },
   { href: "/schedule", label: "Schedule", icon: CalendarRange },
