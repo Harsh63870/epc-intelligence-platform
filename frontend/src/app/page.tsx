@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [dbStatus, setDbStatus] = useState<string>("checking...");
   const [seeding, setSeeding] = useState(false);
-  const [seedMsg, setSeedMsg] = useState<string | null>(null);
+  const [seedResult, setSeedResult] = useState<string | null>(null);
 
   useEffect(() => {
     api.health().then((h) => setDbStatus(h.database)).catch(() => setDbStatus("unreachable"));
@@ -43,14 +43,16 @@ export default function DashboardPage() {
 
   async function handleSeed() {
     setSeeding(true);
-    setSeedMsg(null);
+    setSeedResult(null);
     try {
       const res = await api.seed();
-      setSeedMsg(res.message);
+      setSeedResult(
+        `${res.message} — ${res.documents_in_db} documents, ${res.vectors_in_chroma} vectors, ${res.structured.rfis} RFIs seeded`
+      );
       const m = await api.dashboard();
       setMetrics(m);
     } catch {
-      setSeedMsg("Seed failed — is the backend running?");
+      setSeedResult("Seed failed — is the backend running?");
     } finally {
       setSeeding(false);
     }
@@ -71,9 +73,9 @@ export default function DashboardPage() {
           {seeding ? "Seeding..." : "Seed Demo Project"}
         </button>
       </div>
-      {seedMsg && (
+      {seedResult && (
         <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-          {seedMsg}
+          {seedResult}
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -97,8 +99,8 @@ export default function DashboardPage() {
       <div className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-6">
         <h3 className="mb-2 font-semibold text-slate-100">Project overview</h3>
         <p className="text-sm text-slate-400">
-          Live metrics for non-conformances, RFIs, schedule risks, supply chain, and commissioning will populate as
-          modules are connected to project data.
+          Document corpus and vector search are available under Documents. Run Seed Demo Project to load specifications,
+          RFIs, change orders, and commissioning procedures.
         </p>
       </div>
     </AppShell>

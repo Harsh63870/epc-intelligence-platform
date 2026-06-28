@@ -20,7 +20,8 @@ Built for data centre construction teams targeting Tier III and Tier IV quality 
 - **Frontend:** Next.js, TypeScript, Tailwind CSS
 - **Backend:** FastAPI, SQLAlchemy
 - **Database:** PostgreSQL (Docker) or SQLite (local fallback)
-- **AI (planned):** Groq LLM, ChromaDB, sentence-transformers
+- **Document intelligence:** PyMuPDF, ChromaDB, sentence-transformers (local embeddings)
+- **AI (planned):** Groq LLM for RAG agents
 
 ## Getting started
 
@@ -51,9 +52,18 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 and use **Seed Demo Project** to load the sample project.
+Open http://localhost:3000 and use **Seed Demo Project** to load the sample project and document corpus (23+ specs, RFIs, change orders, commissioning procedures).
+
+**Documents page:** upload PDF/Markdown files and run vector search (e.g. *"UPS battery runtime"*).
 
 API documentation: http://localhost:8000/docs
+
+### Batch seed (CLI)
+
+```powershell
+cd backend
+.\.venv\Scripts\python scripts\seed_corpus.py
+```
 
 ## Project structure
 
