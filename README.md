@@ -8,9 +8,9 @@ Built for data centre construction teams targeting Tier III and Tier IV quality 
 
 | Module | Description |
 |--------|-------------|
-| **Dashboard** | Project KPIs — non-conformances, RFIs, schedule risks, supply chain alerts, commissioning progress |
-| **RFI Copilot** | RAG over project documents with citations and similar-RFI detection |
-| **Spec Compliance** | Automated submittal checking against specifications with audit trail |
+| **Documents** | Upload, chunk, embed, and semantic search over project corpus | Implemented |
+| **RFI Copilot** | RAG + Groq chat with citations and similar-RFI detection | Implemented |
+| **Spec Compliance** | Submittal checking, NC audit trail, golden tests | Implemented |
 | **Schedule Risk** | Critical-path risk identification with mitigation options |
 | **Supply Chain** | Shipment visibility and delivery risk alerts |
 | **Commissioning** | Guided testing against TIA-942 / Uptime Tier standards |
@@ -58,7 +58,20 @@ Open http://localhost:3000 and use **Seed Demo Project** to load the sample proj
 
 API documentation: http://localhost:8000/docs
 
-### Batch seed (CLI)
+### RFI Copilot & Spec Compliance
+
+Set `GROQ_API_KEY` in `backend/.env` for full AI-generated RFI answers (fallback RAG mode works without it).
+
+**RFI Copilot** (`/rfi`): ask questions with citations and similar resolved RFIs.
+
+**Spec Compliance** (`/compliance`): upload vendor submittals from `data/submittals/` to flag non-conformances.
+
+Run golden compliance tests:
+
+```powershell
+cd backend
+.\.venv\Scripts\python scripts\run_golden_tests.py
+```
 
 ```powershell
 cd backend

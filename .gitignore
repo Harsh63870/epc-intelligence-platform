@@ -38,6 +38,8 @@ frontend/.env*.local
 # Local databases & runtime data
 backend/epc_dev.db
 backend/*.db
+backend/epc_test*.db
+backend/golden_test.db
 backend/chroma_data/
 data/uploads/
 
@@ -49,6 +51,8 @@ data/uploads/
 .cursor/
 AGENTS.md
 **/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
 
 # OS
 .DS_Store
