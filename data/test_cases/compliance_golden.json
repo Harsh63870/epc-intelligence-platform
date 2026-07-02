@@ -1,0 +1,26 @@
+[
+  {
+    "submittal_file": "ups-submittal-a.md",
+    "equipment_class": "UPS",
+    "expected_nc_keys": ["battery_runtime"],
+    "expected_severities": ["critical"]
+  },
+  {
+    "submittal_file": "chiller-submittal-b.md",
+    "equipment_class": "Chiller",
+    "expected_nc_keys": ["redundancy"],
+    "expected_severities": ["major"]
+  },
+  {
+    "submittal_file": "switchgear-submittal-c.md",
+    "equipment_class": "Switchgear",
+    "expected_nc_keys": ["standard"],
+    "expected_severities": ["critical"]
+  },
+  {
+    "submittal_file": "generator-submittal-d.md",
+    "equipment_class": "Generator",
+    "expected_nc_keys": ["standby_rating"],
+    "expected_severities": ["major"]
+  }
+]
