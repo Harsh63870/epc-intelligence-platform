@@ -1,15 +1,20 @@
 """Full demo project seed: relational data + document corpus ingestion."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.orm import Session
 
 from app.models import (
     CommissioningTest,
     Document,
+    ProcurementItem,
     Project,
     ProjectStatus,
     RFI,
     RFIStatus,
+    ScheduleTask,
+    ShipmentStatus,
     Specification,
     TestStatus,
 )
@@ -191,6 +196,177 @@ def get_or_create_project(db: Session) -> Project:
     return project
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def seed_operations_data(db: Session, project_id: int) -> dict:
+    """Seed procurement items and schedule tasks with realistic risk scenarios."""
+    counts = {"procurement_items": 0, "schedule_tasks": 0}
+
+    now = _utcnow()
+    mumbai_lat, mumbai_lng = 19.0760, 72.8777
+
+    procurement_defs = [
+        {
+            "equipment_type": "UPS 500kVA",
+            "supplier": "PowerTech Systems",
+            "eta": now + timedelta(days=18),
+            "status": ShipmentStatus.ON_TRACK.value,
+            "risk_score": 0.1,
+            "origin_lat": 48.8566,
+            "origin_lng": 2.3522,
+            "current_lat": 35.0,
+            "current_lng": 45.0,
+        },
+        {
+            "equipment_type": "Generator 4000kW",
+            "supplier": "DieselPower GmbH",
+            "eta": now + timedelta(days=35),
+            "status": ShipmentStatus.DELAYED.value,
+            "risk_score": 0.85,
+            "origin_lat": 51.1657,
+            "origin_lng": 10.4515,
+            "current_lat": 25.0,
+            "current_lng": 55.0,
+        },
+        {
+            "equipment_type": "MV Switchgear",
+            "supplier": "GridEquip Inc",
+            "eta": now + timedelta(days=22),
+            "status": ShipmentStatus.AT_RISK.value,
+            "risk_score": 0.55,
+            "origin_lat": 40.7128,
+            "origin_lng": -74.0060,
+            "current_lat": 30.0,
+            "current_lng": 35.0,
+        },
+        {
+            "equipment_type": "Water-Cooled Chillers (N+2)",
+            "supplier": "CoolFlow Asia",
+            "eta": now + timedelta(days=28),
+            "status": ShipmentStatus.ON_TRACK.value,
+            "risk_score": 0.15,
+            "origin_lat": 31.2304,
+            "origin_lng": 121.4737,
+            "current_lat": 20.0,
+            "current_lng": 90.0,
+        },
+        {
+            "equipment_type": "Static Transfer Switches",
+            "supplier": "TransferTech",
+            "eta": now + timedelta(days=12),
+            "status": ShipmentStatus.ON_TRACK.value,
+            "risk_score": 0.05,
+            "origin_lat": 37.7749,
+            "origin_lng": -122.4194,
+            "current_lat": 15.0,
+            "current_lng": 65.0,
+        },
+    ]
+
+    proc_map: dict[str, ProcurementItem] = {}
+    for pdef in procurement_defs:
+        existing = (
+            db.query(ProcurementItem)
+            .filter(
+                ProcurementItem.project_id == project_id,
+                ProcurementItem.equipment_type == pdef["equipment_type"],
+            )
+            .first()
+        )
+        if existing:
+            proc_map[pdef["equipment_type"]] = existing
+            continue
+        item = ProcurementItem(
+            project_id=project_id,
+            dest_lat=mumbai_lat,
+            dest_lng=mumbai_lng,
+            **pdef,
+        )
+        db.add(item)
+        db.flush()
+        proc_map[pdef["equipment_type"]] = item
+        counts["procurement_items"] += 1
+
+    task_defs = [
+        {
+            "name": "Electrical room fit-out — UPS installation",
+            "planned_start": now + timedelta(days=20),
+            "planned_end": now + timedelta(days=35),
+            "critical_path": True,
+            "proc_key": "UPS 500kVA",
+        },
+        {
+            "name": "Generator yard civil works and fuel system",
+            "planned_start": now + timedelta(days=25),
+            "planned_end": now + timedelta(days=45),
+            "critical_path": True,
+            "proc_key": "Generator 4000kW",
+        },
+        {
+            "name": "MV switchgear energization",
+            "planned_start": now + timedelta(days=18),
+            "planned_end": now + timedelta(days=28),
+            "critical_path": True,
+            "proc_key": "MV Switchgear",
+        },
+        {
+            "name": "Chiller plant installation and piping",
+            "planned_start": now + timedelta(days=30),
+            "planned_end": now + timedelta(days=50),
+            "critical_path": True,
+            "proc_key": "Water-Cooled Chillers (N+2)",
+        },
+        {
+            "name": "STS commissioning and load bank test",
+            "planned_start": now + timedelta(days=14),
+            "planned_end": now + timedelta(days=20),
+            "critical_path": True,
+            "proc_key": "Static Transfer Switches",
+        },
+        {
+            "name": "Raised floor and containment install",
+            "planned_start": now + timedelta(days=10),
+            "planned_end": now + timedelta(days=25),
+            "critical_path": False,
+            "proc_key": None,
+        },
+        {
+            "name": "Integrated system test (IST)",
+            "planned_start": now + timedelta(days=55),
+            "planned_end": now + timedelta(days=65),
+            "critical_path": True,
+            "proc_key": "Generator 4000kW",
+        },
+    ]
+
+    for tdef in task_defs:
+        exists = (
+            db.query(ScheduleTask)
+            .filter(ScheduleTask.project_id == project_id, ScheduleTask.name == tdef["name"])
+            .first()
+        )
+        if exists:
+            continue
+        proc_id = proc_map[tdef["proc_key"]].id if tdef["proc_key"] else None
+        db.add(
+            ScheduleTask(
+                project_id=project_id,
+                name=tdef["name"],
+                planned_start=tdef["planned_start"],
+                planned_end=tdef["planned_end"],
+                critical_path=tdef["critical_path"],
+                depends_on_procurement_id=proc_id,
+                status="planned",
+            )
+        )
+        counts["schedule_tasks"] += 1
+
+    db.commit()
+    return counts
+
+
 def seed_structured_data(db: Session, project_id: int) -> dict:
     counts = {"specifications": 0, "rfis": 0, "commissioning_tests": 0}
 
@@ -243,6 +419,8 @@ def seed_structured_data(db: Session, project_id: int) -> dict:
 def run_full_seed(db: Session) -> dict:
     project = get_or_create_project(db)
     structured = seed_structured_data(db, project.id)
+    operations = seed_operations_data(db, project.id)
+    structured.update(operations)
     ingestion = ingest_data_directory(db, project.id)
 
     document_count = db.query(Document).filter(Document.project_id == project.id).count()
