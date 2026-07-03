@@ -47,7 +47,7 @@ export default function DashboardPage() {
     try {
       const res = await api.seed();
       setSeedResult(
-        `${res.message} — ${res.documents_in_db} documents, ${res.vectors_in_chroma} vectors, ${res.structured.rfis} RFIs seeded`
+        `${res.message} — ${res.documents_in_db} documents, ${res.vectors_in_chroma} vectors, ${res.structured.rfis} RFIs, ${res.structured.procurement_items ?? 0} shipments, ${res.structured.schedule_tasks ?? 0} schedule tasks`
       );
       const m = await api.dashboard();
       setMetrics(m);
@@ -99,8 +99,8 @@ export default function DashboardPage() {
       <div className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-6">
         <h3 className="mb-2 font-semibold text-slate-100">Project overview</h3>
         <p className="text-sm text-slate-400">
-          Document corpus and vector search are available under Documents. Run Seed Demo Project to load specifications,
-          RFIs, change orders, and commissioning procedures.
+          Six intelligence modules connected: Documents, RFI Copilot, Spec Compliance, Schedule Risk, Supply Chain,
+          and Commissioning. Run Seed Demo Project to load the full Mumbai Hyperscale DC-01 dataset.
         </p>
       </div>
     </AppShell>

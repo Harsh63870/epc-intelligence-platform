@@ -8,6 +8,15 @@ from app.schemas import DashboardMetrics, HealthOut, ProjectOut
 
 router = APIRouter()
 
+HOURS_SAVED_BY_ENTITY: dict[str, float] = {
+    "rfi_query": 1.0,
+    "submittal": 2.5,
+    "schedule_risk": 1.5,
+    "supply_chain": 0.5,
+    "commissioning": 1.0,
+}
+DEFAULT_HOURS_PER_EVENT = 0.5
+
 
 @router.get("/health", response_model=HealthOut)
 def health_check(db: Session = Depends(get_db)) -> HealthOut:
@@ -49,7 +58,8 @@ def dashboard_metrics(project_id: int = 1, db: Session = Depends(get_db)) -> Das
         commissioning_progress_pct = round(completed / len(tests) * 100, 1)
     else:
         commissioning_progress_pct = 0.0
-    hours_saved = db.query(AuditEvent).count() * 0.5
+    events = db.query(AuditEvent).filter(AuditEvent.project_id == project_id).all()
+    hours_saved = sum(HOURS_SAVED_BY_ENTITY.get(e.entity_type, DEFAULT_HOURS_PER_EVENT) for e in events)
     return DashboardMetrics(
         active_ncs=active_ncs,
         open_rfis=open_rfis,

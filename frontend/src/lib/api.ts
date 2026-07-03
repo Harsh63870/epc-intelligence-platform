@@ -40,7 +40,13 @@ export type SeedResult = {
   message: string;
   project_id: number;
   project_name: string;
-  structured: { specifications: number; rfis: number; commissioning_tests: number };
+  structured: {
+    specifications: number;
+    rfis: number;
+    commissioning_tests: number;
+    procurement_items?: number;
+    schedule_tasks?: number;
+  };
   ingestion: { ingested: number; skipped: number; errors: string[] };
   documents_in_db: number;
   vectors_in_chroma: number;
@@ -133,6 +139,71 @@ export type NCRecord = {
   standard_ref?: string | null;
 };
 
+export type ScheduleTask = {
+  task_id: number;
+  name: string;
+  planned_start: string | null;
+  planned_end: string | null;
+  critical_path: boolean;
+  status: string;
+  risk_score: number;
+  delay_days: number;
+  days_until_start: number | null;
+  procurement_equipment: string | null;
+  procurement_eta: string | null;
+  risk_level: string;
+};
+
+export type MitigationResponse = {
+  task_id: number;
+  task_name: string;
+  mitigations: string[];
+};
+
+export type Shipment = {
+  id: number;
+  equipment_type: string;
+  supplier: string;
+  eta: string | null;
+  status: string;
+  risk_score: number;
+  origin_lat: number | null;
+  origin_lng: number | null;
+  dest_lat: number | null;
+  dest_lng: number | null;
+  current_lat: number | null;
+  current_lng: number | null;
+};
+
+export type SupplyAlert = {
+  shipment_id: number;
+  equipment_type: string;
+  supplier: string;
+  status: string;
+  eta: string | null;
+  message: string;
+  task_id: number | null;
+  task_name: string | null;
+  severity: string;
+};
+
+export type CommissioningTest = {
+  id: number;
+  standard_ref: string;
+  procedure: string;
+  system_type: string;
+  acceptance_criteria: string | null;
+  status: string;
+  result: Record<string, unknown> | null;
+};
+
+export type CommissioningProgress = {
+  total: number;
+  completed: number;
+  progress_pct: number;
+  by_system: Record<string, { total: number; completed: number; progress_pct: number }>;
+};
+
 export const api = {
   health: () => fetchApi<{ status: string; database: string }>("/api/v1/health"),
   projects: () => fetchApi<Project[]>("/api/v1/projects"),
@@ -170,4 +241,28 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  scheduleTasks: (projectId = 1) =>
+    fetchApi<ScheduleTask[]>(`/api/v1/schedule/tasks?project_id=${projectId}`),
+  scheduleRisks: (projectId = 1) =>
+    fetchApi<ScheduleTask[]>(`/api/v1/schedule/risks?project_id=${projectId}`),
+  scheduleMitigate: (taskId: number, projectId = 1) =>
+    fetchApi<MitigationResponse>(`/api/v1/schedule/mitigate/${taskId}?project_id=${projectId}`, {
+      method: "POST",
+    }),
+  shipments: (projectId = 1) =>
+    fetchApi<Shipment[]>(`/api/v1/supply-chain/shipments?project_id=${projectId}`),
+  supplyAlerts: (projectId = 1) =>
+    fetchApi<SupplyAlert[]>(`/api/v1/supply-chain/alerts?project_id=${projectId}`),
+  commissioningTests: (projectId = 1, systemType?: string) => {
+    const params = new URLSearchParams({ project_id: String(projectId) });
+    if (systemType) params.set("system_type", systemType);
+    return fetchApi<CommissioningTest[]>(`/api/v1/commissioning/tests?${params}`);
+  },
+  commissioningProgress: (projectId = 1) =>
+    fetchApi<CommissioningProgress>(`/api/v1/commissioning/progress?project_id=${projectId}`),
+  recordCommissioningTest: (testId: number, body: { status: string; notes?: string; measured_value?: string }) =>
+    fetchApi<{ id: number; procedure: string; status: string; result: Record<string, unknown> | null }>(
+      `/api/v1/commissioning/tests/${testId}/record`,
+      { method: "POST", body: JSON.stringify(body) }
+    ),
 };
