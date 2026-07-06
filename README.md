@@ -46,44 +46,57 @@ the critical path? Which shipment is about to blow the schedule? Did this system
 ## Architecture
 
 ### Component view
-
 ```mermaid
 flowchart TB
-    subgraph Frontend["Next.js Frontend · port 3000"]
-        Dashboard
-        Documents
-        RFI["RFI Copilot"]
-        Compliance["Spec Compliance"]
-        Schedule["Schedule Risk"]
-        Supply["Supply Chain"]
-        Comm["Commissioning"]
+    subgraph Users["Users & Stakeholders"]
+        PM["Project Manager"]
+        ENG["EPC Engineer"]
+        QA["QA / Commissioning"]
     end
 
-    subgraph Backend["FastAPI Backend · port 8000"]
-        API["REST API /api/v1"]
-        Agents["AI Agents\nRFI · Compliance · Schedule · Supply Chain · Commissioning"]
-        Ingestion["Document Ingestion\nchunk → embed → store"]
+    subgraph Client["Presentation Layer"]
+        WEB["Next.js 16 Web App<br/>TypeScript · Tailwind<br/>:3000"]
     end
 
-    subgraph Storage["Data Layer"]
-        PG[("PostgreSQL 16\nrelational")]
-        Chroma[("ChromaDB\nvector store")]
+    subgraph API["Application Layer — FastAPI :8000"]
+        GW["REST API Gateway<br/>/api/v1"]
+        subgraph Agents["Intelligence Agents"]
+            RFI["RFI Agent<br/>RAG + citations"]
+            SPEC["Spec Compliance Agent<br/>NC audit trail"]
+            SCH["Schedule Agent<br/>risk + mitigations"]
+            SUP["Supply Chain Agent<br/>alerts + impact"]
+            COM["Commissioning Agent<br/>IST wizard"]
+        end
+        ING["Ingestion Pipeline<br/>PyMuPDF · chunk · embed"]
+        AUD["Audit Event Logger<br/>hours-saved metrics"]
     end
 
-    subgraph External["External Service"]
-        Groq["Groq LLM API\nllama-3.3-70b-versatile"]
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL / SQLite<br/>Projects · Specs · RFIs<br/>Schedule · Procurement · NCs")]
+        VEC[("ChromaDB<br/>Document vectors<br/>semantic search")]
     end
 
-    Frontend -- "REST /api/v1" --> API
-    API --> Agents
-    API --> Ingestion
+    subgraph ML["Local ML — no API cost"]
+        EMB["sentence-transformers<br/>all-MiniLM-L6-v2"]
+    end
+
+    subgraph External["External AI"]
+        GROQ["Groq LLM API<br/>llama-3.3-70b-versatile<br/>RFI answers · mitigations"]
+    end
+
+    PM & ENG & QA --> WEB
+    WEB <-->|HTTPS REST JSON| GW
+    GW --> RFI & SPEC & SCH & SUP & COM & ING
+    RFI & SPEC & SCH & SUP & COM --> AUD
+    RFI & ING --> VEC
+    RFI & SCH --> GROQ
+    ING --> EMB
+    EMB --> VEC
     Agents --> PG
-    Agents --> Chroma
-    Agents -. "optional, falls back if unset" .-> Groq
-    Ingestion --> PG
-    Ingestion --> Chroma
-```
+    ING --> PG
+    AUD --> PG
 
+```
 ### Agent responsibilities
 
 Each module in the UI maps to one backend agent, with its own data sources and output:
