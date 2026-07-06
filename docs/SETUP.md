@@ -34,7 +34,7 @@ Default connection string:
 DATABASE_URL=postgresql://epc:epc_secret@127.0.0.1:5433/epc_intelligence
 ```
 
-Set `GROQ_API_KEY` when using AI features. Other variables are optional for initial setup.
+Set `api_key` when using AI features. Other variables are optional for initial setup.
 
 **Frontend** (optional):
 
